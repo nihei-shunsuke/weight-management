@@ -1,7 +1,8 @@
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   GoogleAuthProvider,
   OAuthProvider,
   signOut as firebaseSignOut,
@@ -58,15 +59,20 @@ export async function signIn(email: string, password: string) {
 }
 
 export async function signInWithGoogle() {
-  const credential = await signInWithPopup(auth, googleProvider);
-  await ensureUserDoc(credential.user);
-  return credential.user;
+  await signInWithRedirect(auth, googleProvider);
 }
 
 export async function signInWithApple() {
-  const credential = await signInWithPopup(auth, appleProvider);
-  await ensureUserDoc(credential.user);
-  return credential.user;
+  await signInWithRedirect(auth, appleProvider);
+}
+
+export async function handleRedirectResult() {
+  const result = await getRedirectResult(auth);
+  if (result) {
+    await ensureUserDoc(result.user);
+    return result.user;
+  }
+  return null;
 }
 
 export async function updateDisplayName(displayName: string) {

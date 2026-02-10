@@ -8,7 +8,7 @@ import {
   ReactNode,
 } from "react";
 import { User } from "firebase/auth";
-import { onAuthChange } from "@/lib/firebase/auth";
+import { onAuthChange, handleRedirectResult } from "@/lib/firebase/auth";
 
 interface AuthContextType {
   user: User | null;
@@ -25,6 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    handleRedirectResult().catch(console.error);
     const unsubscribe = onAuthChange((user) => {
       setUser(user);
       setLoading(false);

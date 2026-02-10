@@ -45,10 +45,8 @@ export function RegisterForm() {
     setLoading(true);
     try {
       await signInWithGoogle();
-      router.push("/dashboard");
     } catch {
       setError("Googleログインに失敗しました。");
-    } finally {
       setLoading(false);
     }
   }
@@ -58,10 +56,8 @@ export function RegisterForm() {
     setLoading(true);
     try {
       await signInWithApple();
-      router.push("/dashboard");
     } catch {
       setError("Appleログインに失敗しました。");
-    } finally {
       setLoading(false);
     }
   }
