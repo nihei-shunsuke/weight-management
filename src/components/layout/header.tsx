@@ -19,6 +19,7 @@ const navItems = [
   { href: "/dashboard", label: "全体" },
   { href: "/mypage", label: "マイページ" },
   { href: "/record", label: "データ入力" },
+  { href: "/contact", label: "お問い合わせ" },
   { href: "/settings", label: "設定" },
 ];
 
@@ -49,7 +50,7 @@ export function Header() {
                 href={item.href}
                 className={cn(
                   "text-sm transition-colors hover:text-primary",
-                  pathname === item.href
+                  pathname.startsWith(item.href)
                     ? "text-foreground font-medium"
                     : "text-muted-foreground"
                 )}
@@ -100,7 +101,7 @@ export function Header() {
                   onClick={() => setOpen(false)}
                   className={cn(
                     "px-3 py-2 rounded-md text-sm transition-colors",
-                    pathname === item.href
+                    pathname.startsWith(item.href)
                       ? "bg-muted font-medium"
                       : "text-muted-foreground hover:bg-muted/50"
                   )}

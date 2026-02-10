@@ -37,3 +37,21 @@ export const PRESET_COLORS = [
 ] as const;
 
 export const WEIGHT_COLOR = "#f97316"; // orange for default weight metric
+
+export interface Conversation {
+  id?: string;
+  participantUids: string[];
+  participantNames: Record<string, string>;
+  lastMessage: string;
+  lastMessageAt: Date;
+  lastMessageSenderUid: string;
+  createdAt: Date;
+}
+
+export interface Message {
+  id?: string;
+  senderUid: string;
+  senderName: string;
+  text: string;
+  createdAt: Date;
+}

@@ -4,7 +4,6 @@ import {
   signInWithRedirect,
   getRedirectResult,
   GoogleAuthProvider,
-  OAuthProvider,
   signOut as firebaseSignOut,
   updateProfile,
   onAuthStateChanged,
@@ -14,9 +13,6 @@ import { doc, setDoc, getDoc } from "firebase/firestore";
 import { auth, db } from "./config";
 
 const googleProvider = new GoogleAuthProvider();
-const appleProvider = new OAuthProvider("apple.com");
-appleProvider.addScope("email");
-appleProvider.addScope("name");
 
 async function ensureUserDoc(user: User) {
   const ref = doc(db, "users", user.uid);
@@ -60,10 +56,6 @@ export async function signIn(email: string, password: string) {
 
 export async function signInWithGoogle() {
   await signInWithRedirect(auth, googleProvider);
-}
-
-export async function signInWithApple() {
-  await signInWithRedirect(auth, appleProvider);
 }
 
 export async function handleRedirectResult() {
