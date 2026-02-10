@@ -8,6 +8,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { calculateBMI } from "@/lib/format";
 import { formatFridayLabel } from "@/lib/jst";
 import type { MonthlyRecord, UserProfile, MetricDefinition } from "@/types";
@@ -16,18 +24,23 @@ interface Props {
   records: MonthlyRecord[];
   users: UserProfile[];
   metrics: MetricDefinition[];
+  selectedWeek: string;
+  weekOptions: string[];
+  onWeekChange: (week: string) => void;
 }
 
-export function MembersTable({ records, users, metrics }: Props) {
-  const latestWeek = records.reduce(
-    (max, r) => (r.date > max ? r.date : max),
-    ""
-  );
-
-  const latestRecords = records.filter((r) => r.date === latestWeek);
+export function MembersTable({
+  records,
+  users,
+  metrics,
+  selectedWeek,
+  weekOptions,
+  onWeekChange,
+}: Props) {
+  const weekRecords = records.filter((r) => r.date === selectedWeek);
   const userMap = new Map(users.map((u) => [u.uid, u]));
 
-  if (latestRecords.length === 0) {
+  if (weekOptions.length === 0) {
     return (
       <p className="text-sm text-muted-foreground py-8 text-center">
         データがまだ登録されていません。
@@ -36,13 +49,33 @@ export function MembersTable({ records, users, metrics }: Props) {
   }
 
   return (
-    <div>
-      <p className="text-sm text-muted-foreground mb-4">
-        {latestWeek.length === 10
-          ? formatFridayLabel(latestWeek)
-          : latestWeek}{" "}
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <Label>対象の週</Label>
+        <Select value={selectedWeek} onValueChange={onWeekChange}>
+          <SelectTrigger className="w-[220px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {weekOptions.map((w) => (
+              <SelectItem key={w} value={w}>
+                {w.length === 10 ? formatFridayLabel(w) : w}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <p className="text-sm text-muted-foreground">
+        {selectedWeek.length === 10
+          ? formatFridayLabel(selectedWeek)
+          : selectedWeek}{" "}
         のデータ
       </p>
+      {weekRecords.length === 0 ? (
+        <p className="text-sm text-muted-foreground py-8 text-center">
+          この週のデータはまだありません。
+        </p>
+      ) : (
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
@@ -59,7 +92,7 @@ export function MembersTable({ records, users, metrics }: Props) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {latestRecords.map((record) => {
+            {weekRecords.map((record) => {
               const bmi =
                 record.height && record.height > 0
                   ? calculateBMI(record.weight, record.height)
@@ -83,6 +116,7 @@ export function MembersTable({ records, users, metrics }: Props) {
           </TableBody>
         </Table>
       </div>
+      )}
     </div>
   );
 }

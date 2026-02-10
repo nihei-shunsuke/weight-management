@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   getAllRecords,
   getAllUsers,
@@ -17,6 +17,7 @@ export default function DashboardPage() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [metrics, setMetrics] = useState<MetricDefinition[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedWeek, setSelectedWeek] = useState<string>("");
 
   useEffect(() => {
     async function fetchData() {
@@ -32,6 +33,15 @@ export default function DashboardPage() {
     }
     fetchData();
   }, []);
+
+  const weekOptions = useMemo(() => {
+    const weeks = [...new Set(records.map((r) => r.date))].sort((a, b) =>
+      b.localeCompare(a)
+    );
+    return weeks;
+  }, [records]);
+
+  const displayWeek = selectedWeek || weekOptions[0] || "";
 
   if (loading) {
     return (
@@ -55,6 +65,9 @@ export default function DashboardPage() {
             records={records}
             users={users}
             metrics={metrics}
+            selectedWeek={displayWeek}
+            weekOptions={weekOptions}
+            onWeekChange={setSelectedWeek}
           />
         </TabsContent>
         <TabsContent value="chart">
