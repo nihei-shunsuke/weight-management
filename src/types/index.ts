@@ -10,6 +10,7 @@ export interface MonthlyRecord {
   userId: string;
   date: string; // "YYYY-MM"
   weight: number; // kg
+  height?: number; // cm
   customMetrics: Record<string, number>; // metricId -> value
   createdAt: Date;
   updatedAt: Date;

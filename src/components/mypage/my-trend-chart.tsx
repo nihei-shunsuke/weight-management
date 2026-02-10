@@ -10,8 +10,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { calculateBMI } from "@/lib/format";
 import type { MonthlyRecord, MetricDefinition } from "@/types";
 import { WEIGHT_COLOR } from "@/types";
+
+const BMI_COLOR = "#6366f1"; // indigo
 
 interface Props {
   records: MonthlyRecord[];
@@ -25,6 +28,9 @@ export function MyTrendChart({ records, metrics }: Props) {
     if (selectedMetric === "weight") {
       return { name: "体重", unit: "kg", color: WEIGHT_COLOR };
     }
+    if (selectedMetric === "bmi") {
+      return { name: "BMI", unit: "", color: BMI_COLOR };
+    }
     const m = metrics.find((m) => m.id === selectedMetric);
     return m
       ? { name: m.name, unit: m.unit, color: m.color }
@@ -34,11 +40,15 @@ export function MyTrendChart({ records, metrics }: Props) {
   const chartData = useMemo(() => {
     const sorted = [...records].sort((a, b) => a.date.localeCompare(b.date));
     const labels = sorted.map((r) => r.date);
-    const data = sorted.map((r) =>
-      selectedMetric === "weight"
-        ? r.weight
-        : (r.customMetrics?.[selectedMetric] ?? null)
-    );
+    const data = sorted.map((r) => {
+      if (selectedMetric === "weight") return r.weight;
+      if (selectedMetric === "bmi") {
+        return r.height && r.height > 0
+          ? calculateBMI(r.weight, r.height)
+          : null;
+      }
+      return r.customMetrics?.[selectedMetric] ?? null;
+    });
 
     return {
       labels,
@@ -65,6 +75,7 @@ export function MyTrendChart({ records, metrics }: Props) {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="weight">体重 (kg)</SelectItem>
+            <SelectItem value="bmi">BMI</SelectItem>
             {metrics.map((m) => (
               <SelectItem key={m.id} value={m.id!}>
                 {m.name} ({m.unit})
@@ -90,7 +101,9 @@ export function MyTrendChart({ records, metrics }: Props) {
               y: {
                 title: {
                   display: true,
-                  text: `${metricInfo.name} (${metricInfo.unit})`,
+                  text: metricInfo.unit
+                    ? `${metricInfo.name} (${metricInfo.unit})`
+                    : metricInfo.name,
                 },
               },
             },

@@ -40,6 +40,12 @@ export function formatRelativeTime(date: Date): string {
   });
 }
 
+export function calculateBMI(weight: number, height: number): number | null {
+  if (!height || height <= 0) return null;
+  const heightM = height / 100;
+  return Math.round((weight / (heightM * heightM)) * 10) / 10;
+}
+
 export function isSameDay(a: Date, b: Date): boolean {
   return (
     a.getFullYear() === b.getFullYear() &&

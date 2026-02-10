@@ -79,6 +79,7 @@ export async function upsertRecord(
   userId: string,
   date: string,
   weight: number,
+  height: number | undefined,
   customMetrics: Record<string, number>
 ): Promise<void> {
   const snapshot = await getDocs(
@@ -89,22 +90,42 @@ export async function upsertRecord(
     )
   );
 
+  const data: Record<string, unknown> = {
+    weight,
+    customMetrics,
+    updatedAt: new Date(),
+  };
+  if (height !== undefined) {
+    data.height = height;
+  }
+
   if (snapshot.empty) {
     await addDoc(collection(db, "records"), {
       userId,
       date,
-      weight,
-      customMetrics,
+      ...data,
       createdAt: new Date(),
-      updatedAt: new Date(),
     });
   } else {
     const existingDoc = snapshot.docs[0];
-    await updateDoc(doc(db, "records", existingDoc.id), {
-      weight,
-      customMetrics,
-      updatedAt: new Date(),
-    });
+    await updateDoc(doc(db, "records", existingDoc.id), data);
+  }
+
+  // 身長バックフィル: 同ユーザーの height 未設定レコードを更新
+  if (height !== undefined && height > 0) {
+    const allUserRecords = await getDocs(
+      query(
+        collection(db, "records"),
+        where("userId", "==", userId)
+      )
+    );
+    const updates = allUserRecords.docs
+      .filter((d) => {
+        const h = d.data().height;
+        return h === undefined || h === null || h === 0;
+      })
+      .map((d) => updateDoc(doc(db, "records", d.id), { height }));
+    await Promise.all(updates);
   }
 }
 

@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { calculateBMI } from "@/lib/format";
 import type { MonthlyRecord, UserProfile, MetricDefinition } from "@/types";
 
 interface Props {
@@ -44,6 +45,8 @@ export function MembersTable({ records, users, metrics }: Props) {
             <TableRow>
               <TableHead>名前</TableHead>
               <TableHead>体重 (kg)</TableHead>
+              <TableHead>身長 (cm)</TableHead>
+              <TableHead>BMI</TableHead>
               {metrics.map((m) => (
                 <TableHead key={m.id}>
                   {m.name} ({m.unit})
@@ -52,19 +55,27 @@ export function MembersTable({ records, users, metrics }: Props) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {latestRecords.map((record) => (
-              <TableRow key={record.id}>
-                <TableCell className="font-medium">
-                  {userMap.get(record.userId)?.displayName ?? "不明"}
-                </TableCell>
-                <TableCell>{record.weight}</TableCell>
-                {metrics.map((m) => (
-                  <TableCell key={m.id}>
-                    {record.customMetrics?.[m.id!] ?? "-"}
+            {latestRecords.map((record) => {
+              const bmi =
+                record.height && record.height > 0
+                  ? calculateBMI(record.weight, record.height)
+                  : null;
+              return (
+                <TableRow key={record.id}>
+                  <TableCell className="font-medium">
+                    {userMap.get(record.userId)?.displayName ?? "不明"}
                   </TableCell>
-                ))}
-              </TableRow>
-            ))}
+                  <TableCell>{record.weight}</TableCell>
+                  <TableCell>{record.height ?? "-"}</TableCell>
+                  <TableCell>{bmi ?? "-"}</TableCell>
+                  {metrics.map((m) => (
+                    <TableCell key={m.id}>
+                      {record.customMetrics?.[m.id!] ?? "-"}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>

@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { calculateBMI } from "@/lib/format";
 import type { MonthlyRecord, UserProfile, MetricDefinition } from "@/types";
 import { WEIGHT_COLOR } from "@/types";
 
@@ -26,6 +27,8 @@ const COLORS = [
   "#0d9488",
 ];
 
+const BMI_COLOR = "#6366f1"; // indigo
+
 interface Props {
   records: MonthlyRecord[];
   users: UserProfile[];
@@ -38,6 +41,9 @@ export function MembersChart({ records, users, metrics }: Props) {
   const metricInfo = useMemo(() => {
     if (selectedMetric === "weight") {
       return { name: "体重", unit: "kg", color: WEIGHT_COLOR };
+    }
+    if (selectedMetric === "bmi") {
+      return { name: "BMI", unit: "", color: BMI_COLOR };
     }
     const m = metrics.find((m) => m.id === selectedMetric);
     return m
@@ -53,12 +59,20 @@ export function MembersChart({ records, users, metrics }: Props) {
     const datasets = userIds.map((userId, index) => {
       const userRecords = records.filter((r) => r.userId === userId);
       const dataByMonth = new Map(
-        userRecords.map((r) => [
-          r.date,
-          selectedMetric === "weight"
-            ? r.weight
-            : (r.customMetrics?.[selectedMetric] ?? null),
-        ])
+        userRecords.map((r) => {
+          let value: number | null;
+          if (selectedMetric === "weight") {
+            value = r.weight;
+          } else if (selectedMetric === "bmi") {
+            value =
+              r.height && r.height > 0
+                ? calculateBMI(r.weight, r.height)
+                : null;
+          } else {
+            value = r.customMetrics?.[selectedMetric] ?? null;
+          }
+          return [r.date, value];
+        })
       );
 
       return {
@@ -84,6 +98,7 @@ export function MembersChart({ records, users, metrics }: Props) {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="weight">体重 (kg)</SelectItem>
+            <SelectItem value="bmi">BMI</SelectItem>
             {metrics.map((m) => (
               <SelectItem key={m.id} value={m.id!}>
                 {m.name} ({m.unit})
@@ -109,7 +124,9 @@ export function MembersChart({ records, users, metrics }: Props) {
               y: {
                 title: {
                   display: true,
-                  text: `${metricInfo.name} (${metricInfo.unit})`,
+                  text: metricInfo.unit
+                    ? `${metricInfo.name} (${metricInfo.unit})`
+                    : metricInfo.name,
                 },
               },
             },

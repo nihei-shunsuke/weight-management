@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import {
@@ -8,6 +8,7 @@ import {
   getAllMetrics,
   getUserRecords,
 } from "@/lib/firebase/firestore";
+import { calculateBMI } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,6 +39,7 @@ export function RecordForm() {
     format(new Date(), "yyyy-MM")
   );
   const [weight, setWeight] = useState("");
+  const [height, setHeight] = useState("");
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
@@ -64,6 +66,13 @@ export function RecordForm() {
     const existing = records.find((r) => r.date === selectedMonth);
     if (existing) {
       setWeight(existing.weight.toString());
+      if (existing.height) {
+        setHeight(existing.height.toString());
+      } else {
+        // 他のレコードから最新の身長を取得
+        const latestHeight = records.find((r) => r.height && r.height > 0)?.height;
+        setHeight(latestHeight ? latestHeight.toString() : "");
+      }
       const values: Record<string, string> = {};
       metrics.forEach((m) => {
         if (m.id && existing.customMetrics?.[m.id] !== undefined) {
@@ -73,9 +82,19 @@ export function RecordForm() {
       setCustomValues(values);
     } else {
       setWeight("");
+      // 既存レコードから身長を自動補完
+      const latestHeight = records.find((r) => r.height && r.height > 0)?.height;
+      setHeight(latestHeight ? latestHeight.toString() : "");
       setCustomValues({});
     }
   }, [selectedMonth, records, metrics]);
+
+  const bmi = useMemo(() => {
+    const w = parseFloat(weight);
+    const h = parseFloat(height);
+    if (isNaN(w) || isNaN(h)) return null;
+    return calculateBMI(w, h);
+  }, [weight, height]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -89,11 +108,14 @@ export function RecordForm() {
       }
     });
 
+    const heightVal = height ? parseFloat(height) : undefined;
+
     try {
       await upsertRecord(
         user.uid,
         selectedMonth,
         parseFloat(weight),
+        heightVal,
         customMetrics
       );
       toast.success(`${selectedMonth} のデータを保存しました`);
@@ -139,6 +161,24 @@ export function RecordForm() {
               required
             />
           </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="height">身長 (cm)</Label>
+            <Input
+              id="height"
+              type="number"
+              step="0.1"
+              value={height}
+              onChange={(e) => setHeight(e.target.value)}
+            />
+          </div>
+
+          {bmi !== null && (
+            <div className="rounded-md bg-muted px-4 py-3">
+              <span className="text-sm text-muted-foreground">BMI: </span>
+              <span className="text-sm font-medium">{bmi}</span>
+            </div>
+          )}
 
           {metrics.map((metric) => (
             <div key={metric.id} className="space-y-2">
