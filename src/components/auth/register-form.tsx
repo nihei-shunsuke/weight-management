@@ -45,8 +45,10 @@ export function RegisterForm() {
     setLoading(true);
     try {
       await signInWithGoogle();
+      router.push("/dashboard");
     } catch {
       setError("Googleログインに失敗しました。");
+    } finally {
       setLoading(false);
     }
   }
@@ -55,7 +57,7 @@ export function RegisterForm() {
     <Card>
       <CardHeader>
         <CardTitle>新規登録</CardTitle>
-        <CardDescription>野球チーム体重管理システム</CardDescription>
+        <CardDescription>安積高校野球部/体重管理システム</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-2">
@@ -103,6 +105,7 @@ export function RegisterForm() {
             <Input
               id="displayName"
               type="text"
+              autoComplete="name"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="山田 太郎"
@@ -114,6 +117,7 @@ export function RegisterForm() {
             <Input
               id="email"
               type="email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -124,6 +128,7 @@ export function RegisterForm() {
             <Input
               id="password"
               type="password"
+              autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               minLength={6}

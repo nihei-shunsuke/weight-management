@@ -9,6 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { calculateBMI } from "@/lib/format";
+import { formatFridayLabel } from "@/lib/jst";
 import type { MonthlyRecord, UserProfile, MetricDefinition } from "@/types";
 
 interface Props {
@@ -18,12 +19,12 @@ interface Props {
 }
 
 export function MembersTable({ records, users, metrics }: Props) {
-  const latestMonth = records.reduce(
+  const latestWeek = records.reduce(
     (max, r) => (r.date > max ? r.date : max),
     ""
   );
 
-  const latestRecords = records.filter((r) => r.date === latestMonth);
+  const latestRecords = records.filter((r) => r.date === latestWeek);
   const userMap = new Map(users.map((u) => [u.uid, u]));
 
   if (latestRecords.length === 0) {
@@ -37,7 +38,10 @@ export function MembersTable({ records, users, metrics }: Props) {
   return (
     <div>
       <p className="text-sm text-muted-foreground mb-4">
-        {latestMonth} のデータ
+        {latestWeek.length === 10
+          ? formatFridayLabel(latestWeek)
+          : latestWeek}{" "}
+        のデータ
       </p>
       <div className="overflow-x-auto">
         <Table>

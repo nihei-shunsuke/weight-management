@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "体重管理 - 野球チーム",
-  description: "野球チームの体重・コンディション管理アプリ",
+  title: "体重管理",
+  description: "安積高校野球部の体重・コンディション管理アプリ",
 };
 
 export default function RootLayout({

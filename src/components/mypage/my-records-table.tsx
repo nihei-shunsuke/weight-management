@@ -9,6 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { calculateBMI } from "@/lib/format";
+import { formatFridayLabel } from "@/lib/jst";
 import type { MonthlyRecord, MetricDefinition } from "@/types";
 
 interface Props {
@@ -30,7 +31,7 @@ export function MyRecordsTable({ records, metrics }: Props) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>月</TableHead>
+            <TableHead>週（金曜）</TableHead>
             <TableHead>体重 (kg)</TableHead>
             <TableHead>身長 (cm)</TableHead>
             <TableHead>BMI</TableHead>
@@ -49,7 +50,11 @@ export function MyRecordsTable({ records, metrics }: Props) {
                 : null;
             return (
               <TableRow key={record.id}>
-                <TableCell className="font-medium">{record.date}</TableCell>
+                <TableCell className="font-medium">
+                  {record.date.length === 10
+                    ? formatFridayLabel(record.date)
+                    : record.date}
+                </TableCell>
                 <TableCell>{record.weight}</TableCell>
                 <TableCell>{record.height ?? "-"}</TableCell>
                 <TableCell>{bmi ?? "-"}</TableCell>

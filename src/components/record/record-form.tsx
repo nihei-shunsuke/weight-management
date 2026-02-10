@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { useRouter } from "next/navigation";
 import {
   upsertRecord,
   getAllMetrics,
@@ -27,27 +26,35 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import type { MetricDefinition, MonthlyRecord } from "@/types";
-import { format } from "date-fns";
+import {
+  getCurrentFridayJST,
+  getRecentFridaysJST,
+  formatFridayLabel,
+} from "@/lib/jst";
 
 export function RecordForm() {
   const { user } = useAuth();
-  const router = useRouter();
 
   const [metrics, setMetrics] = useState<MetricDefinition[]>([]);
   const [records, setRecords] = useState<MonthlyRecord[]>([]);
-  const [selectedMonth, setSelectedMonth] = useState(
-    format(new Date(), "yyyy-MM")
-  );
+  const [selectedWeek, setSelectedWeek] = useState(getCurrentFridayJST());
   const [weight, setWeight] = useState("");
   const [height, setHeight] = useState("");
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
-  const monthOptions = Array.from({ length: 12 }, (_, i) => {
-    const d = new Date();
-    d.setMonth(d.getMonth() - i);
-    return format(d, "yyyy-MM");
-  });
+  const weekOptions = getRecentFridaysJST(12);
+
+  // タブに戻ったときに「今週の金曜が変わっていたら」自動でその金曜を選択（日本時間）
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState !== "visible") return;
+      const currentFriday = getCurrentFridayJST();
+      setSelectedWeek((prev) => (prev !== currentFriday ? currentFriday : prev));
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -63,7 +70,7 @@ export function RecordForm() {
   }, [user]);
 
   useEffect(() => {
-    const existing = records.find((r) => r.date === selectedMonth);
+    const existing = records.find((r) => r.date === selectedWeek);
     if (existing) {
       setWeight(existing.weight.toString());
       if (existing.height) {
@@ -87,7 +94,7 @@ export function RecordForm() {
       setHeight(latestHeight ? latestHeight.toString() : "");
       setCustomValues({});
     }
-  }, [selectedMonth, records, metrics]);
+  }, [selectedWeek, records, metrics]);
 
   const bmi = useMemo(() => {
     const w = parseFloat(weight);
@@ -113,13 +120,14 @@ export function RecordForm() {
     try {
       await upsertRecord(
         user.uid,
-        selectedMonth,
+        selectedWeek,
         parseFloat(weight),
         heightVal,
         customMetrics
       );
-      toast.success(`${selectedMonth} のデータを保存しました`);
-      router.push("/mypage");
+      const recordsData = await getUserRecords(user.uid);
+      setRecords(recordsData);
+      toast.success(`${formatFridayLabel(selectedWeek)} のデータを保存しました`);
     } catch {
       toast.error("保存に失敗しました");
     } finally {
@@ -130,20 +138,20 @@ export function RecordForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>月次データ入力</CardTitle>
+        <CardTitle>週次データ入力（毎週金曜・日本時間）</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label>月</Label>
-            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <Label>週（金曜日）</Label>
+            <Select value={selectedWeek} onValueChange={setSelectedWeek}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {monthOptions.map((m) => (
-                  <SelectItem key={m} value={m}>
-                    {m}
+                {weekOptions.map((w) => (
+                  <SelectItem key={w} value={w}>
+                    {formatFridayLabel(w)}
                   </SelectItem>
                 ))}
               </SelectContent>

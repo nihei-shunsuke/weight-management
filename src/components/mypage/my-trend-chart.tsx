@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { calculateBMI } from "@/lib/format";
+import { formatFridayLabel } from "@/lib/jst";
 import type { MonthlyRecord, MetricDefinition } from "@/types";
 import { WEIGHT_COLOR } from "@/types";
 
@@ -39,7 +40,9 @@ export function MyTrendChart({ records, metrics }: Props) {
 
   const chartData = useMemo(() => {
     const sorted = [...records].sort((a, b) => a.date.localeCompare(b.date));
-    const labels = sorted.map((r) => r.date);
+    const labels = sorted.map((r) =>
+      r.date.length === 10 ? formatFridayLabel(r.date) : r.date
+    );
     const data = sorted.map((r) => {
       if (selectedMetric === "weight") return r.weight;
       if (selectedMetric === "bmi") {

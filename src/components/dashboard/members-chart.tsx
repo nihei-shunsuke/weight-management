@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { calculateBMI } from "@/lib/format";
+import { formatFridayLabel } from "@/lib/jst";
 import type { MonthlyRecord, UserProfile, MetricDefinition } from "@/types";
 import { WEIGHT_COLOR } from "@/types";
 
@@ -52,13 +53,13 @@ export function MembersChart({ records, users, metrics }: Props) {
   }, [selectedMetric, metrics]);
 
   const chartData = useMemo(() => {
-    const months = [...new Set(records.map((r) => r.date))].sort();
+    const weeks = [...new Set(records.map((r) => r.date))].sort();
     const userMap = new Map(users.map((u) => [u.uid, u]));
     const userIds = [...new Set(records.map((r) => r.userId))];
 
     const datasets = userIds.map((userId, index) => {
       const userRecords = records.filter((r) => r.userId === userId);
-      const dataByMonth = new Map(
+      const dataByWeek = new Map(
         userRecords.map((r) => {
           let value: number | null;
           if (selectedMetric === "weight") {
@@ -77,7 +78,7 @@ export function MembersChart({ records, users, metrics }: Props) {
 
       return {
         label: userMap.get(userId)?.displayName ?? "不明",
-        data: months.map((m) => dataByMonth.get(m) ?? null),
+        data: weeks.map((w) => dataByWeek.get(w) ?? null),
         borderColor: COLORS[index % COLORS.length],
         backgroundColor: COLORS[index % COLORS.length],
         tension: 0.3,
@@ -85,7 +86,10 @@ export function MembersChart({ records, users, metrics }: Props) {
       };
     });
 
-    return { labels: months, datasets };
+    const labels = weeks.map((w) =>
+      w.length === 10 ? formatFridayLabel(w) : w
+    );
+    return { labels, datasets };
   }, [records, users, selectedMetric]);
 
   return (

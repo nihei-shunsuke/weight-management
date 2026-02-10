@@ -5,10 +5,11 @@ export interface UserProfile {
   createdAt: Date;
 }
 
+/** 週次記録（日本時間の金曜日単位）。date はその週の金曜日 "YYYY-MM-DD" */
 export interface MonthlyRecord {
   id?: string;
   userId: string;
-  date: string; // "YYYY-MM"
+  date: string; // "YYYY-MM-DD"（金曜日・日本時間）
   weight: number; // kg
   height?: number; // cm
   customMetrics: Record<string, number>; // metricId -> value
