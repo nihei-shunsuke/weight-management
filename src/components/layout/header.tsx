@@ -91,7 +91,7 @@ export function Header() {
               </svg>
             </Button>
           </SheetTrigger>
-          <SheetContent side="right">
+          <SheetContent side="right" aria-describedby={undefined}>
             <SheetTitle>メニュー</SheetTitle>
             <nav className="flex flex-col gap-2 mt-4">
               {navItems.map((item) => (
