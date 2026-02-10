@@ -1,7 +1,7 @@
 "use client";
 
-import { ConversationList } from "@/components/contact/conversation-list";
+import { ChatView } from "@/components/contact/chat-view";
 
 export default function ContactPage() {
-  return <ConversationList />;
+  return <ChatView />;
 }

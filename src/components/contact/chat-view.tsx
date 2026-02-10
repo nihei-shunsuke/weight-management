@@ -2,18 +2,15 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { getMessages, sendMessage } from "@/lib/firebase/firestore";
+import { getContactMessages, sendContactMessage } from "@/lib/firebase/firestore";
 import { isSameDay } from "@/lib/format";
 import { ChatBubble } from "./chat-bubble";
 import { ChatDateSeparator } from "./chat-date-separator";
 import { ChatInputBar } from "./chat-input-bar";
+import { Button } from "@/components/ui/button";
 import type { Message } from "@/types";
 
-interface ChatViewProps {
-  conversationId: string;
-}
-
-export function ChatView({ conversationId }: ChatViewProps) {
+export function ChatView() {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,10 +19,10 @@ export function ChatView({ conversationId }: ChatViewProps) {
 
   const loadMessages = useCallback(async () => {
     setLoading(true);
-    const msgs = await getMessages(conversationId);
+    const msgs = await getContactMessages();
     setMessages(msgs);
     setLoading(false);
-  }, [conversationId]);
+  }, []);
 
   useEffect(() => {
     loadMessages();
@@ -38,8 +35,7 @@ export function ChatView({ conversationId }: ChatViewProps) {
   async function handleSend(text: string) {
     if (!user) return;
     setSending(true);
-    await sendMessage(
-      conversationId,
+    await sendContactMessage(
       user.uid,
       user.displayName || "匿名",
       text
@@ -50,6 +46,12 @@ export function ChatView({ conversationId }: ChatViewProps) {
 
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)]">
+      <div className="flex items-center justify-between border-b px-4 py-3">
+        <h1 className="font-bold text-lg">お問い合わせ</h1>
+        <Button variant="outline" size="sm" onClick={loadMessages}>
+          更新
+        </Button>
+      </div>
       <div className="flex-1 overflow-y-auto px-4 py-2 space-y-1">
         {loading ? (
           <div className="flex justify-center py-8 text-sm text-muted-foreground">

@@ -16,7 +16,6 @@ import type {
   UserProfile,
   MonthlyRecord,
   MetricDefinition,
-  Conversation,
   Message,
 } from "@/types";
 
@@ -149,7 +148,7 @@ export async function deleteMetric(metricId: string): Promise<void> {
   await deleteDoc(doc(db, "metrics", metricId));
 }
 
-// ========== CONVERSATIONS ==========
+// ========== CONTACT (グループチャット) ==========
 
 function toDate(val: unknown): Date {
   if (val instanceof Timestamp) return val.toDate();
@@ -157,80 +156,10 @@ function toDate(val: unknown): Date {
   return new Date();
 }
 
-export async function getOrCreateConversation(
-  uid1: string,
-  name1: string,
-  uid2: string,
-  name2: string
-): Promise<string> {
-  const sorted = [uid1, uid2].sort();
+export async function getContactMessages(): Promise<Message[]> {
   const snapshot = await getDocs(
     query(
-      collection(db, "conversations"),
-      where("participantUids", "==", sorted)
-    )
-  );
-  if (!snapshot.empty) {
-    return snapshot.docs[0].id;
-  }
-  const docRef = await addDoc(collection(db, "conversations"), {
-    participantUids: sorted,
-    participantNames: { [uid1]: name1, [uid2]: name2 },
-    lastMessage: "",
-    lastMessageAt: new Date(),
-    lastMessageSenderUid: "",
-    createdAt: new Date(),
-  });
-  return docRef.id;
-}
-
-export async function getUserConversations(
-  uid: string
-): Promise<Conversation[]> {
-  const snapshot = await getDocs(
-    query(
-      collection(db, "conversations"),
-      where("participantUids", "array-contains", uid),
-      orderBy("lastMessageAt", "desc")
-    )
-  );
-  return snapshot.docs.map((d) => {
-    const data = d.data();
-    return {
-      id: d.id,
-      participantUids: data.participantUids,
-      participantNames: data.participantNames,
-      lastMessage: data.lastMessage,
-      lastMessageAt: toDate(data.lastMessageAt),
-      lastMessageSenderUid: data.lastMessageSenderUid,
-      createdAt: toDate(data.createdAt),
-    } as Conversation;
-  });
-}
-
-export async function getConversation(
-  conversationId: string
-): Promise<Conversation | null> {
-  const snapshot = await getDoc(doc(db, "conversations", conversationId));
-  if (!snapshot.exists()) return null;
-  const data = snapshot.data();
-  return {
-    id: snapshot.id,
-    participantUids: data.participantUids,
-    participantNames: data.participantNames,
-    lastMessage: data.lastMessage,
-    lastMessageAt: toDate(data.lastMessageAt),
-    lastMessageSenderUid: data.lastMessageSenderUid,
-    createdAt: toDate(data.createdAt),
-  } as Conversation;
-}
-
-export async function getMessages(
-  conversationId: string
-): Promise<Message[]> {
-  const snapshot = await getDocs(
-    query(
-      collection(db, "conversations", conversationId, "messages"),
+      collection(db, "contactMessages"),
       orderBy("createdAt", "asc")
     )
   );
@@ -246,25 +175,15 @@ export async function getMessages(
   });
 }
 
-export async function sendMessage(
-  conversationId: string,
+export async function sendContactMessage(
   senderUid: string,
   senderName: string,
   text: string
 ): Promise<void> {
-  const now = new Date();
-  await addDoc(
-    collection(db, "conversations", conversationId, "messages"),
-    {
-      senderUid,
-      senderName,
-      text,
-      createdAt: now,
-    }
-  );
-  await updateDoc(doc(db, "conversations", conversationId), {
-    lastMessage: text,
-    lastMessageAt: now,
-    lastMessageSenderUid: senderUid,
+  await addDoc(collection(db, "contactMessages"), {
+    senderUid,
+    senderName,
+    text,
+    createdAt: new Date(),
   });
 }
